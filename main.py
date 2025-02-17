@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, List
 from pydantic import BaseModel
@@ -62,6 +62,16 @@ async def create_room(request: Request):
     }
     logger.info(f"New room created - ID: {room_id}, Settings: {settings.model_dump()}")  # Updated from dict()
     return {"room_id": room_id}
+
+@app.get("/game/{game_code}")
+async def get_game(game_code: str):
+    """Get game information for a specific room"""
+    if game_code not in rooms:
+        logger.warning(f"Room not found - ID: {game_code}")
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    logger.info(f"Room info requested - ID: {game_code}")
+    return rooms[game_code]
 
 @app.websocket("/ws/draft")
 async def websocket_endpoint(websocket: WebSocket):
