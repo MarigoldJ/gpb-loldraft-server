@@ -21,10 +21,17 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# Add CORS middleware
+# CORS configuration
+origins = [
+    "http://localhost:3000",     # Next.js dev server
+    "http://localhost:8000",     # FastAPI dev server
+    "https://your-production-domain.com"  # Replace with your production domain
+]
+
+# Add CORS middleware with specific configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
