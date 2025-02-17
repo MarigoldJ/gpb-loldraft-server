@@ -78,13 +78,24 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     query_params = websocket.query_params
     room_id = query_params.get("id")
+    client_id = str(uuid.uuid4())[:6]  # Generate unique client ID
 
     if not room_id or room_id not in rooms:
-        logger.warning(f"Invalid room connection attempt - ID: {room_id}")
+        logger.warning(f"Invalid room connection attempt - Client: {client_id}, Room: {room_id}")
         await websocket.close()
         return
 
-    logger.info(f"New client connected to room {room_id}")
+    # Initialize connected_clients if not exists
+    if "connected_clients" not in rooms[room_id]:
+        rooms[room_id]["connected_clients"] = {}
+    
+    # Add client to room
+    rooms[room_id]["connected_clients"][client_id] = {
+        "connected_at": datetime.now().isoformat(),
+        "client_id": client_id
+    }
+    
+    logger.info(f"Client {client_id} connected to room {room_id} - Active clients: {len(rooms[room_id]['connected_clients'])}")
 
     try:
         while True:
@@ -94,15 +105,18 @@ async def websocket_endpoint(websocket: WebSocket):
 
             if action == "ban":
                 rooms[room_id]["bans"].append(champion)
-                logger.info(f"Room {room_id}: Champion {champion} banned")
+                logger.info(f"Room {room_id}: Champion {champion} banned by client {client_id}")
             elif action == "pick":
                 rooms[room_id]["picks"].append(champion)
-                logger.info(f"Room {room_id}: Champion {champion} picked")
+                logger.info(f"Room {room_id}: Champion {champion} picked by client {client_id}")
 
             await websocket.send_json(rooms[room_id])
 
     except WebSocketDisconnect:
-        logger.info(f"Client disconnected from room {room_id}")
+        # Remove client from room
+        if client_id in rooms[room_id]["connected_clients"]:
+            del rooms[room_id]["connected_clients"][client_id]
+            logger.info(f"Client {client_id} disconnected from room {room_id} - Remaining clients: {len(rooms[room_id]['connected_clients'])}")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
