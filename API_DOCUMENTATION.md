@@ -296,3 +296,30 @@ const ws = new WebSocket(
 - Solo: 1 participant
 - Representative: 2 participants
 - Team: 10 participants
+
+## Implementation Notes
+
+### State Management
+
+- 서버는 모든 게임 방의 상태를 메모리에 저장
+- 각 방은 고유한 8자리 ID로 식별
+- WebSocket 연결은 별도로 관리되어 실시간 업데이트 제공
+
+### Game Modes
+
+- Solo: 혼자서 연습하는 모드 (WebSocket 미지원)
+- Representative: 팀 대표 참가 모드
+- Team: 팀 전체 참가 모드
+
+### Room Lifecycle
+
+1. 방 생성: 설정 검증 후 고유 ID 할당
+2. 사용자 참가: 닉네임으로 참가, 첫 참가자가 방장
+3. 팀 구성: 블루팀/레드팀/관전자로 역할 분배
+4. 게임 진행: 모든 참가자 준비 완료 시 시작
+5. 결과 제출: 게임 종료 후 결과 등록
+
+### Real-time Updates
+
+- 방의 모든 상태 변경은 실시간으로 전체 참가자에게 전달
+- WebSocket을 통한 양방향 통신으로 즉각적인 상태 동기화
